@@ -9,46 +9,41 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.notesappfull.databinding.ItemRowBinding
 
 
-class RVAdapter ( private var noteList: ArrayList<Note>,private var activity: MainActivity): RecyclerView.Adapter<RVAdapter.ItemViewHolder>()  {
-    class ItemViewHolder(val binding: ItemRowBinding): RecyclerView.ViewHolder(binding.root) {
+class RVAdapter() : RecyclerView.Adapter<RVAdapter.ItemViewHolder>() {
+    private var notes = emptyList<Note>()
+    var onClickItem:((Note) -> Unit)? = null
+    class ItemViewHolder(val binding: ItemRowBinding) : RecyclerView.ViewHolder(binding.root) {
 
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
-        return  ItemViewHolder(ItemRowBinding.inflate(
-            LayoutInflater.from(parent.context)
-            , parent,
-            false))
+        return ItemViewHolder(
+            ItemRowBinding.inflate(
+                LayoutInflater.from(parent.context), parent,
+                false
+            )
+        )
     }
 
     override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
-        val notes = noteList[position]
+        val note = notes[position]
         holder.binding.apply {
-            tvNote.text = notes.note
+            tvNoteTitle.text = note.noteTitle
+            tvNoteDescription.text = note.noteDescription
 
-            ibEditNote.setOnClickListener {
-                activity.raiseDialog(notes.pk)
-            }
-            ibDeleteNote.setOnClickListener {
 
-                val builder = AlertDialog.Builder(holder.itemView.context)
-                builder.setTitle("Do you want to delete this note ?")
-                builder.setPositiveButton("Delete"){_,_ ->
-                    activity.deleteNote(notes.pk)
-                }
-                builder.setNegativeButton("Cancel"){_,_ ->}
-                builder.show()
-            }
 
         }
+        holder.itemView.setOnClickListener {
+            onClickItem?.invoke(notes[position])
+        }
     }
-
     override fun getItemCount(): Int {
-        return noteList.size
+        return notes.size
     }
 
-    fun update(noteList: ArrayList<Note>){
-        this.noteList = noteList
+    fun updateRV(notes: List<Note>) {
+        this.notes = notes
         notifyDataSetChanged()
     }
 }
