@@ -30,7 +30,7 @@ class RVAdapter ( private var noteList: ArrayList<Note>,private var activity: Ma
                 activity.raiseDialog(notes.pk)
             }
             ibDeleteNote.setOnClickListener {
-//                activity.deleteNote(notes.pk)
+
                 val builder = AlertDialog.Builder(holder.itemView.context)
                 builder.setTitle("Do you want to delete this note ?")
                 builder.setPositiveButton("Delete"){_,_ ->

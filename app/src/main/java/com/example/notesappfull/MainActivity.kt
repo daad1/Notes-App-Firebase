@@ -8,76 +8,85 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.example.notesappfull.databinding.ActivityMainBinding
+import kotlinx.coroutines.*
 
 class MainActivity: AppCompatActivity() {
-    val dbHelper by lazy { DbHelper(applicationContext) }
+    lateinit var binding: ActivityMainBinding
+    lateinit var recyclerView: RecyclerView
+    lateinit var noteList: List<Note>
 
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var recyclerViewAdapter: RVAdapter
-    private lateinit var etNote:EditText
-    private lateinit var addButton : FloatingActionButton
-    private lateinit var noteList: ArrayList<Note>
+    private val dbHelper by lazy { NoteDatabase.getDatabase(this).noteDao() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        noteList = arrayListOf()
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         recyclerView = findViewById(R.id.recyclerView)
-        etNote = findViewById(R.id.etNote)
-        addButton = findViewById(R.id.addButton)
-
-        recyclerViewAdapter = RVAdapter(noteList,this)
-        recyclerView.adapter = recyclerViewAdapter
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        readNote()
+        addNote()
+        getAllNote()
+    }
 
-        addButton.setOnClickListener {
-            if (!etNote.text.isNullOrEmpty()) {
-                val note = etNote.text.toString()
-                dbHelper.saveData(note)
-                Toast.makeText(this, "Added successfully", Toast.LENGTH_SHORT).show()
-                readNote()
+
+    private fun getAllNote() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val data = async { dbHelper.getAllNote() }.await()
+            if (data.isNotEmpty()) {
+                withContext(Dispatchers.Main) {
+                    noteList = data
+                    recyclerView.adapter = RVAdapter(noteList as ArrayList<Note>, this@MainActivity)
+                    recyclerView.adapter!!.notifyDataSetChanged()
+                }
             }
         }
     }
 
-    private fun readNote() {
-        noteList = dbHelper.readData()
-        recyclerViewAdapter.update(noteList)
+    private fun addNote() {
+        binding.addButton.setOnClickListener {
+            val note = binding.etNote.text.toString()
+            CoroutineScope(Dispatchers.IO).launch {
+                dbHelper.addNote(Note(0, note))
+                getAllNote()
+            }
+            Toast.makeText(this, "Added successfully", Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun raiseDialog(pk: Int) {
-
         val dialogBuilder = AlertDialog.Builder(this)
         val updatedNote = EditText(this)
-        updatedNote.hint ="Update your note"
+        updatedNote.hint = "Update your note"
         dialogBuilder
             .setCancelable(false)
-            .setPositiveButton("Save", DialogInterface.OnClickListener {
-                    _, _ -> editNote(pk, updatedNote.text.toString())
+            .setPositiveButton("Save", DialogInterface.OnClickListener { _, _ ->
+                editNote(pk, updatedNote.text.toString())
+                recyclerView.adapter!!.notifyDataSetChanged()
+                getAllNote()
             })
-            .setNegativeButton("Cancel", DialogInterface.OnClickListener {
-                    dialog, _ -> dialog.cancel()
+            .setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog, _ ->
+                dialog.cancel()
             })
         val alert = dialogBuilder.create()
         alert.setTitle("Update Note")
         alert.setView(updatedNote)
-
         alert.show()
     }
 
     private fun editNote(pk: Int, note: String) {
-        dbHelper.updateData(Note(pk,note))
-        Toast.makeText(this, "Updated successfully", Toast.LENGTH_LONG).show()
-        readNote()
+        CoroutineScope(Dispatchers.IO).launch {
+            dbHelper.updateNote(Note(pk, note))
+            getAllNote()
+        }
+        Toast.makeText(this, "Update Successfully", Toast.LENGTH_SHORT).show()
     }
 
     fun deleteNote(pk: Int) {
-
-        dbHelper.deleteData(Note(pk,""))
-        readNote()
+        CoroutineScope(Dispatchers.IO).launch {
+            dbHelper.deleteNote(Note(pk, ""))
+            getAllNote()
+        }
+        Toast.makeText(this, "Delete Successfully", Toast.LENGTH_SHORT).show()
     }
 }
