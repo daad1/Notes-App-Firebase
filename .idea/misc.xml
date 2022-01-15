@@ -3,11 +3,12 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/Users/ASUS/AndroidStudioProjects/NotesAppFull/app/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="..\:/Users/ASUS/AndroidStudioProjects/NotesAppFull/app/src/main/res/drawable/ic_baseline_note_add_24.xml" value="0.19583333333333333" />
+        <entry key="..\:/Users/ASUS/AndroidStudioProjects/NotesAppFull/app/src/main/res/layout/activity_main.xml" value="0.268" />
         <entry key="..\:/Users/ASUS/AndroidStudioProjects/NotesAppFull/app/src/main/res/layout/activity_notes_update.xml" value="0.1" />
         <entry key="..\:/Users/ASUS/AndroidStudioProjects/NotesAppFull/app/src/main/res/layout/activity_update_notes.xml" value="0.1" />
         <entry key="..\:/Users/ASUS/AndroidStudioProjects/NotesAppFull/app/src/main/res/layout/fragment_add_notes.xml" value="0.18115942028985507" />
-        <entry key="..\:/Users/ASUS/AndroidStudioProjects/NotesAppFull/app/src/main/res/layout/item_row.xml" value="0.36" />
+        <entry key="..\:/Users/ASUS/AndroidStudioProjects/NotesAppFull/app/src/main/res/layout/item_row.xml" value="0.29381443298969073" />
         <entry key="..\:/Users/ASUS/AndroidStudioProjects/NotesAppFull/app/src/main/res/menu/addnotes.xml" value="0.4" />
         <entry key="..\:/Users/ASUS/AndroidStudioProjects/NotesAppFull/app/src/main/res/menu/noteslist_menu.xml" value="0.268" />
       </map>

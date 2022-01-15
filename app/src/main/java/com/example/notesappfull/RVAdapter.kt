@@ -6,45 +6,49 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.android.synthetic.main.item_row.view.*
+import com.example.notesappfull.databinding.ItemRowBinding
 
-class RVAdapter (private val notes: List<NoteData>, private val ctx: MainActivity): RecyclerView.Adapter<RVAdapter.ViewItemHolder>() {
-    class ViewItemHolder(itemView: View): RecyclerView.ViewHolder(itemView)
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewItemHolder {
-        return ViewItemHolder(
-            LayoutInflater.from(parent.context).inflate(
-                R.layout.item_row,
-                parent,
-                false
-            )
-        )
+class RVAdapter ( private var noteList: ArrayList<Note>,private var activity: MainActivity): RecyclerView.Adapter<RVAdapter.ItemViewHolder>()  {
+    class ItemViewHolder(val binding: ItemRowBinding): RecyclerView.ViewHolder(binding.root) {
+
     }
 
-    override fun onBindViewHolder(holder: ViewItemHolder, position: Int) {
-        val note = notes[position]
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
+        return  ItemViewHolder(ItemRowBinding.inflate(
+            LayoutInflater.from(parent.context)
+            , parent,
+            false))
+    }
 
-        holder.itemView.apply {
-            tv_note.text = note.note
+    override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
+        val notes = noteList[position]
+        holder.binding.apply {
+            tvNote.text = notes.note
 
-            IV_delete.setOnClickListener {
-                val builder = AlertDialog.Builder(holder.itemView.context)
-                builder.setTitle("Are you sure wou want to delete this note?")
-                builder.setPositiveButton("Delete"){_, _ -> ctx.delete(note.pk)}
-                builder.setNegativeButton("Cancel"){_, _ ->}
-
-                builder.show()
+            ibEditNote.setOnClickListener {
+                activity.raiseDialog(notes.pk)
             }
-
-            IV_edit.setOnClickListener {
-                val intent = Intent(holder.itemView.context, UpdateNotes::class.java)
-                intent.putExtra("pk", note.pk)
-                intent.putExtra("note", note.note)
-                holder.itemView.context.startActivity(intent)
+            ibDeleteNote.setOnClickListener {
+//                activity.deleteNote(notes.pk)
+                val builder = AlertDialog.Builder(holder.itemView.context)
+                builder.setTitle("Do you want to delete this note ?")
+                builder.setPositiveButton("Delete"){_,_ ->
+                    activity.deleteNote(notes.pk)
+                }
+                builder.setNegativeButton("Cancel"){_,_ ->}
+                builder.show()
             }
 
         }
     }
 
-    override fun getItemCount(): Int = notes.size
+    override fun getItemCount(): Int {
+        return noteList.size
+    }
+
+    fun update(noteList: ArrayList<Note>){
+        this.noteList = noteList
+        notifyDataSetChanged()
+    }
 }

@@ -1,74 +1,83 @@
 package com.example.notesappfull
 
+import android.content.DialogInterface
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class MainActivity: AppCompatActivity() {
-    private lateinit var btn: Button
-    private lateinit var ed: EditText
-    private lateinit var notes: MutableList<NoteData>
-    private lateinit var rvMain: RecyclerView
-    private lateinit var adapter: RVAdapter
+    val dbHelper by lazy { DbHelper(applicationContext) }
 
-    private val databaseSQLite by lazy { DbHelper(applicationContext, this) }
-
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var recyclerViewAdapter: RVAdapter
+    private lateinit var etNote:EditText
+    private lateinit var addButton : FloatingActionButton
+    private lateinit var noteList: ArrayList<Note>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        btn = findViewById(R.id.btn_submit)
-        ed = findViewById(R.id.ed_note)
-        notes = databaseSQLite.retrieveNotes()
-        rvMain = findViewById(R.id.rvMain)
-        adapter = RVAdapter(notes, this)
-        rvMain.adapter = adapter
-        rvMain.layoutManager = LinearLayoutManager(this)
+        noteList = arrayListOf()
+        recyclerView = findViewById(R.id.recyclerView)
+        etNote = findViewById(R.id.etNote)
+        addButton = findViewById(R.id.addButton)
 
-        btn.setOnClickListener {
-            val n = ed.text.toString()
-            if (n.isNotEmpty()) {
-                val res = databaseSQLite.addNotes(n)
-                if (res > 0) {
-                    Toast.makeText(this, "Added successfully", Toast.LENGTH_LONG).show()
-                    ed.text = null
-                    notes = databaseSQLite.retrieveNotes()
-                    adapter = RVAdapter(notes, this)
-                    rvMain.adapter = adapter
-                } else {
-                    Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show()
-                }
+        recyclerViewAdapter = RVAdapter(noteList,this)
+        recyclerView.adapter = recyclerViewAdapter
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        readNote()
+
+        addButton.setOnClickListener {
+            if (!etNote.text.isNullOrEmpty()) {
+                val note = etNote.text.toString()
+                dbHelper.saveData(note)
+                Toast.makeText(this, "Added successfully", Toast.LENGTH_SHORT).show()
+                readNote()
             }
         }
-
     }
 
-    fun delete(pk: Int) {
-        databaseSQLite.noteDelete(pk)
-        Toast.makeText(this, "Delete successfully", Toast.LENGTH_LONG).show()
-
+    private fun readNote() {
+        noteList = dbHelper.readData()
+        recyclerViewAdapter.update(noteList)
     }
 
-    fun notifyRecycler() {
-        notes = databaseSQLite.retrieveNotes()
-        adapter = RVAdapter(notes, this)
-        rvMain.adapter = adapter
+    fun raiseDialog(pk: Int) {
+
+        val dialogBuilder = AlertDialog.Builder(this)
+        val updatedNote = EditText(this)
+        updatedNote.hint ="Update your note"
+        dialogBuilder
+            .setCancelable(false)
+            .setPositiveButton("Save", DialogInterface.OnClickListener {
+                    _, _ -> editNote(pk, updatedNote.text.toString())
+            })
+            .setNegativeButton("Cancel", DialogInterface.OnClickListener {
+                    dialog, _ -> dialog.cancel()
+            })
+        val alert = dialogBuilder.create()
+        alert.setTitle("Update Note")
+        alert.setView(updatedNote)
+
+        alert.show()
     }
 
-
-    override fun onResume() {
-        notes = databaseSQLite.retrieveNotes()
-        adapter = RVAdapter(notes, this)
-        rvMain.adapter = adapter
-        super.onResume()
+    private fun editNote(pk: Int, note: String) {
+        dbHelper.updateData(Note(pk,note))
+        Toast.makeText(this, "Updated successfully", Toast.LENGTH_LONG).show()
+        readNote()
     }
-}
 
-private operator fun Unit.compareTo(i: Int): Int {
-    TODO("Not yet implemented")
+    fun deleteNote(pk: Int) {
+
+        dbHelper.deleteData(Note(pk,""))
+        readNote()
+    }
 }

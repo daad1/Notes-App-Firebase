@@ -7,48 +7,52 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
 
-class DbHelper(context: Context, private val activity : MainActivity):SQLiteOpenHelper(context,"notes.db",null,2) {
-  private  val sqlite : SQLiteDatabase = writableDatabase
+class DbHelper(context: Context): SQLiteOpenHelper(context,"notes.db", null, 2) {
+    private val sqLiteDatabase: SQLiteDatabase = writableDatabase
 
     override fun onCreate(db: SQLiteDatabase?) {
-        db?.execSQL("create table Notes(pk INTEGER PRIMARY KEY AUTOINCREMENT , Note text)")
-
-
+        db?.execSQL("create table notes (pk INTEGER PRIMARY KEY AUTOINCREMENT, Note text)")
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, p1: Int, p2: Int) {
-        db!!.execSQL("DROP TABLE IF EXISTS Notes ")
+        db!!.execSQL("DROP TABLE IF EXISTS notes")
         onCreate(db)
     }
-    fun addNotes(Note: String ){
+
+    fun saveData(note: String){
         val contentValues = ContentValues()
-        contentValues.put("NoteTitle",Note)
 
-        sqlite.insert("Notes",null , contentValues)
+        contentValues.put("Note", note)
 
-
+        sqLiteDatabase.insert("notes", null, contentValues)
     }
-    fun retrieveNotes(): MutableList<NoteData>{
-        val res = mutableListOf<NoteData>()
-        val cursor : Cursor = sqlite.rawQuery("SELECT * FROM Notes",null)
-        if (cursor.moveToFirst()){
-            res.add(NoteData(cursor.getInt(0), cursor.getString(1).toString()))
-            while (cursor.moveToNext()){
-                res.add(NoteData(cursor.getInt(0), cursor.getString(1).toString()))
+
+    fun readData(): ArrayList<Note>{
+        val noteList = arrayListOf<Note>()
+
+
+        val cursor: Cursor = sqLiteDatabase.rawQuery("SELECT * FROM notes", null)
+
+        if(cursor.count < 1){
+            println("No Data Found")
+        }else{
+            while(cursor.moveToNext()){
+                val pk = cursor.getInt(0)
+                val note = cursor.getString(1)
+
+                noteList.add(Note(pk, note))
             }
         }
-        return  res
+        return noteList
     }
 
-    fun noteDelete(p : Int){
-        val res = sqlite.delete("Notes","pk = ?", arrayOf(p.toString()))
-        activity.notifyRecycler()
+    fun updateData(note: Note){
+        val contentValues = ContentValues()
+        contentValues.put("Note", note.note)
+        sqLiteDatabase.update("notes", contentValues, "pk = ${note.pk}", null)
     }
 
-    fun noteUpdate(pk: Int , newNote : String){
-        val contentValues =ContentValues()
-        contentValues.put("note",newNote)
-        val res = sqlite.update("Notes",contentValues,"pk = ?", arrayOf(pk.toString()))
+    fun deleteData(note: Note){
+        sqLiteDatabase.delete("notes", "pk = ${note.pk}", null)
     }
-
 }
