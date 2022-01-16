@@ -16,8 +16,9 @@ import com.example.notesappfull.databinding.ActivityMainBinding
 import kotlinx.coroutines.*
 
 class MainActivity: AppCompatActivity() {
-    lateinit var binding:ActivityMainBinding
-    lateinit var viewModel: ViewModel
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var viewModel: ViewModel
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,22 +32,26 @@ class MainActivity: AppCompatActivity() {
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
 
         viewModel = ViewModelProvider(this).get(ViewModel::class.java)
-        viewModel.getAllNote.observe(this, { notes ->
+
+        viewModel.getAllNote().observe(this, { notes ->
             adapter.updateRV(notes)
         })
+
+
 
 
 
         binding.addButton.setOnClickListener {
             showAddNoteDialog()
         }
+
         adapter.onClickItem = { notes ->
             showActionNoteDialog(notes)
         }
     }
 
     private fun showActionNoteDialog(note: Note) {
-        val builder = AlertDialog.Builder(this)
+        val builder = android.app.AlertDialog.Builder(this)
         builder.setTitle("Select Action")
         builder.setPositiveButton("Delete"){_, _ ->
             // viewModel.deleteNote(note)
@@ -56,16 +61,16 @@ class MainActivity: AppCompatActivity() {
             showUpdateDialog(note)
         }
         builder.setNeutralButton("Cancel"){_, _ ->
-            Toast.makeText(this,"Cancel",Toast.LENGTH_SHORT).show()
+            Toast.makeText(this,"Cancel", Toast.LENGTH_SHORT).show()
         }
         builder.create().show()
     }
 
     private fun showDeleteDialog(note: Note) {
-        val builder = AlertDialog.Builder(this)
+        val builder = android.app.AlertDialog.Builder(this)
         builder.setTitle("Are you sure want to delete this note?")
         builder.setPositiveButton("Delete") { _, _ ->
-            viewModel.deleteNote(note)
+            viewModel.deleteNote(note.id)
         }
         builder.setNegativeButton("Cancel") { _, _ -> }
         builder.show()
@@ -76,8 +81,8 @@ class MainActivity: AppCompatActivity() {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_update_note)
         dialog.setCancelable(true)
-        val etNoteTitle:EditText = dialog.findViewById(R.id.etNoteTitle)
-        val etNoteDescription:EditText = dialog.findViewById(R.id.etNoteDescription)
+        val etNoteTitle: EditText = dialog.findViewById(R.id.etNoteTitle)
+        val etNoteDescription: EditText = dialog.findViewById(R.id.etNoteDescription)
         etNoteTitle.setText(note.noteTitle)
         etNoteDescription.setText(note.noteDescription)
         dialog.findViewById<Button>(R.id.cancelButton).setOnClickListener {
@@ -85,8 +90,7 @@ class MainActivity: AppCompatActivity() {
         }
         dialog.findViewById<Button>(R.id.updateButton).setOnClickListener {
             if (inputCheck(etNoteTitle.text.toString(), etNoteDescription.text.toString())){
-                val notes = Note(note.pk,etNoteTitle.text.toString(),etNoteDescription.text.toString())
-                viewModel.updateNote(notes)
+                viewModel.updateNote(note.id, etNoteTitle.text.toString(),etNoteDescription.text.toString())
                 dialog.dismiss()
                 Toast.makeText(this,"Note Updated", Toast.LENGTH_SHORT).show()
             }
@@ -104,14 +108,14 @@ class MainActivity: AppCompatActivity() {
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_add_new_note)
         dialog.setCancelable(true)
-        val etNoteTitle:EditText = dialog.findViewById(R.id.etNoteTitle)
-        val etNoteDescription:EditText = dialog.findViewById(R.id.etNoteDescription)
+        val etNoteTitle: EditText = dialog.findViewById(R.id.etNoteTitle)
+        val etNoteDescription: EditText = dialog.findViewById(R.id.etNoteDescription)
         dialog.findViewById<Button>(R.id.cancelButton).setOnClickListener {
             dialog.dismiss()
         }
         dialog.findViewById<Button>(R.id.addButton).setOnClickListener {
             if (inputCheck(etNoteTitle.text.toString(), etNoteDescription.text.toString())){
-                val notes = Note(0,etNoteTitle.text.toString(),etNoteDescription.text.toString())
+                val notes = Note("",etNoteTitle.text.toString(),etNoteDescription.text.toString())
                 viewModel.addNote(notes)
                 dialog.dismiss()
                 Toast.makeText(this,"Data Added", Toast.LENGTH_SHORT).show()

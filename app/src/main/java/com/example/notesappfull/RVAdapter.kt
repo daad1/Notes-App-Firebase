@@ -31,8 +31,6 @@ class RVAdapter() : RecyclerView.Adapter<RVAdapter.ItemViewHolder>() {
             tvNoteTitle.text = note.noteTitle
             tvNoteDescription.text = note.noteDescription
 
-
-
         }
         holder.itemView.setOnClickListener {
             onClickItem?.invoke(notes[position])

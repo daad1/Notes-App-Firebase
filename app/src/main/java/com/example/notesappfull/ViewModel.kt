@@ -1,30 +1,110 @@
 package com.example.notesappfull
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
+
+import androidx.lifecycle.MutableLiveData
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+
+
 class ViewModel (application: Application): AndroidViewModel(application) {
-    private val repository:Repository
-    val getAllNote: LiveData<List<Note>>
-    init{
-        val dao = NoteDatabase.getDatabase(application).noteDao()
-        repository = Repository(dao)
-        getAllNote = repository.getAllNote
-    }
+    private var notes:MutableLiveData<List<Note>> = MutableLiveData()
+    private val db = Firebase.firestore
+    private var TAG = "MainActivity"
+
 
     fun addNote(note: Note){
-        CoroutineScope(Dispatchers.IO).launch{ repository.addNote(note) }
+        CoroutineScope(Dispatchers.IO).launch{
+            val note = hashMapOf(
+                "noteTitle" to note.noteTitle,
+                "noteDescription" to note.noteDescription ,
+            )
+            db.collection("notes").add(note)
+                .addOnSuccessListener { documentReference ->
+                    Log.d(TAG, "DocumentSnapshot added with ID: ${documentReference.id}")
+                    getAllNote()
+                }
+                .addOnFailureListener { e ->
+                    Log.w(TAG, "Error adding document", e)
+                }
+        }
     }
 
-    fun updateNote(note: Note)
-    { CoroutineScope(Dispatchers.IO).launch { repository.updateNote(note) }
+
+    fun getAllNote():MutableLiveData<List<Note>>{
+        db.collection("notes")
+            .get()
+            .addOnSuccessListener {
+                    result ->
+                var details = arrayListOf<Note>()
+                for (document in result){
+                    var desc = ""
+                    var title = ""
+                    for (value in document
+                        .data)
+                    {
+                        if(value.key.equals("noteTitle"))
+                        {
+                            title = value.value.toString()
+                        }
+                        else if(value.key.equals("noteDescription")){
+                            desc = value.value.toString()
+                        }
+
+                    }
+                    details.add(Note(document.id,title,desc))
+                    notes.postValue(details)
+
+                }
+
+            }
+            .addOnFailureListener { e -> Log.w(TAG, "Error adding document", e) }
+        return notes
+
     }
 
-    fun deleteNote(note: Note){
-        CoroutineScope(Dispatchers.IO).launch { repository.deleteNote(note) }
+
+    fun updateNote(id:String,noteTitle:String,noteDescription:String)
+    {
+        CoroutineScope(Dispatchers.IO).launch {
+            db.collection("notes")
+                .get()
+                .addOnSuccessListener {
+                        result ->
+                    for (document in result){
+                        if (document.id == id){
+                            db.collection("notes").document(id).update("noteTitle",noteTitle,"noteDescription",noteDescription)
+                        }
+
+                    }
+                    getAllNote()
+                }
+                .addOnFailureListener { e -> Log.w(TAG, "Error updating document", e) }
+        }
+    }
+
+    fun deleteNote(id: String){
+        CoroutineScope(Dispatchers.IO).launch {
+            db.collection("notes")
+                .get()
+                .addOnSuccessListener {
+                        result ->
+                    for(document in result){
+                        if(document.id == id){
+                            db.collection("notes").document(id).delete()
+                        }
+                    }
+                    getAllNote()
+                }
+                .addOnFailureListener { exception->
+                    Log.w(TAG,"Error deleted document",exception)
+                }
+        }
     }
 }
